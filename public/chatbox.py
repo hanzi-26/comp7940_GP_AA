@@ -1,7 +1,7 @@
 from google.cloud.firestore import FieldFilter
 from telegram import Update
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
-CallbackContext)
+                          CallbackContext)
 import configparser
 import logging
 from ChatGPT_HKBU import HKBU_ChatGPT
@@ -9,6 +9,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import logging
 from firebase_admin import firestore
+
 
 class FirestoreHandler(logging.Handler):
     def __init__(self, collection):
@@ -26,7 +27,8 @@ class FirestoreHandler(logging.Handler):
             self.db.collection(self.collection).add(log_entry)
         except Exception as e:
             print(f"Failed to log to Firestore: {e}")
-            
+
+
 def equiped_chatgpt1(update, context):
     global chatgpt, db
     user_id = str(update.effective_user.id)
@@ -38,10 +40,9 @@ def equiped_chatgpt1(update, context):
         return
 
     user_data = user_doc.to_dict()
-    in_group = user_data.get('in_group', False)  # Default to False if missing
+    in_group = user_data.get('in_group', False)
 
     if in_group:
-        # Broadcast to matched users
         interests = user_data.get('interests', [])
         matches = (
             db.collection('users')
@@ -51,26 +52,30 @@ def equiped_chatgpt1(update, context):
         )
         reply_message = update.message.text
         for match in matches:
-            try:
-                context.bot.send_message(chat_id=int(match.id), text=reply_message)
-            except Exception as e:
-                logging.error(f"Failed to send message to {match.id}: {e}")
+            # Use run_async to send messages without blocking
+            context.application.run_async(
+                context.bot.send_message,
+                chat_id=int(match.id),
+                text=reply_message
+            )
     else:
-        # Use ChatGPT
+        # Run ChatGPT submission asynchronously
         reply_message = chatgpt.submit(update.message.text)
         context.bot.send_message(chat_id=update.effective_chat.id, text=reply_message)
+
 
 def main():
     # Load your token and create an Updater for your Bot
     config = configparser.ConfigParser()
     config.read('config.ini')
-    updater = Updater(token=(config['TELEGRAM']['ACCESS_TOKEN']), use_context=True)
+    updater = Updater(token=(config['TELEGRAM']['ACCESS_TOKEN']), use_context=True,
+                      request_kwargs={'read_timeout': 20, 'connect_timeout': 20})
     dispatcher = updater.dispatcher
     global chatgpt
-    chatgpt=HKBU_ChatGPT(config)
+    chatgpt = HKBU_ChatGPT(config)
     try:
         global db  # Declare db as global
-        # 初始化 Firebase
+        # Initialize Firebase
         cred = credentials.Certificate("service-account-key.json")
         firebase_admin.initialize_app(cred, {'projectId': 'comp7940-aa'})
         db = firestore.client()
@@ -78,30 +83,31 @@ def main():
         # Test the database
         doc_ref = db.collection('test').document('test_doc')
         doc_ref.set({'message': 'Hello Firestore!'})
-        print("Firestore connection success！")
+        print("Firestore connection successful!")
     except Exception as e:
         print(f"Firestore connection failed: {e}")
         exit(1)
-
-    # You can set this logging module, so you will know when
-    # and why things do not work as expected Meanwhile, update your config.ini as:
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO, handlers=[FirestoreHandler(collection='logs')])
-    # register a dispatcher to handle message: here we register an echo dispatcher
-    # echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
     chatgpt_handler = MessageHandler(Filters.text & (~Filters.command), equiped_chatgpt1)
-    # dispatcher.add_handler(echo_handler)
-    # on different commands - answer in Telegram
-    dispatcher.add_handler(CommandHandler("hello", hello))
-    dispatcher.add_handler(CommandHandler("match", match))
+
+    # Configure logging
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        level=logging.INFO,
+                        handlers=[FirestoreHandler(collection='logs')])
+
+    # Register command handlers
+    dispatcher.add_handler(CommandHandler("hello", hello, run_async=True))
+    dispatcher.add_handler(CommandHandler("match", match, run_async=True))
     dispatcher.add_handler(CommandHandler("add", add))
+    dispatcher.add_handler(chatgpt_handler)
     dispatcher.add_handler(CommandHandler("help", help_command))
     dispatcher.add_handler(CommandHandler("recommend", equiped_chatgpt))
     dispatcher.add_handler(CommandHandler("interests", interests))
     dispatcher.add_handler(CommandHandler("exit", exit_group))
-    dispatcher.add_handler(chatgpt_handler)
-    # To start the bot:
+
+    # Start the bot
     updater.start_polling()
     updater.idle()
+
 
 def exit_group(update: Update, context: CallbackContext) -> None:
     global db
@@ -113,22 +119,44 @@ def exit_group(update: Update, context: CallbackContext) -> None:
     except Exception as e:
         update.message.reply_text(f"❌ Error: {str(e)}")
 
+
 def help_command(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /help is issued."""
-    update.message.reply_text('Helping you helping you.')
-    
+    help_text = """
+Available commands:
+/hello <name> - Greet the bot
+/match - Find users with similar interests
+/add <keyword> - Count a keyword
+/interests <interest1> <interest2>... - Set your interests
+/exit - Leave the group chat
+/recommend <topic> - Get event recommendations
+/help - Show this help message
+"""
+    update.message.reply_text(help_text)
+
+
 def hello(update: Update, context: CallbackContext) -> None:
+    if not context.args:
+        update.message.reply_text("Please provide your name, e.g., /hello Alice")
+        return
+
     logging.info(context.args[0])
     msg = context.args[0]
     print(msg)
     update.message.reply_text('Good day, ' + msg + '!')
- 
+
+
 def equiped_chatgpt(update, context):
-    user_input = update.message.text
+    if not context.args:
+        update.message.reply_text("Please provide a topic, e.g., /recommend gaming")
+        return
+
+    user_input = ' '.join(context.args)
     # Custom prompt for event recommendations
     prompt = f"Recommend virtual events related to {user_input}. Keep the response under 100 words."
     reply_message = chatgpt.submit(prompt)
     context.bot.send_message(chat_id=update.effective_chat.id, text=reply_message)
+
 
 def match(update: Update, context: CallbackContext) -> None:
     global db
@@ -137,7 +165,6 @@ def match(update: Update, context: CallbackContext) -> None:
         user_ref = db.collection('users').document(user_id)
         user_doc = user_ref.get()
         user_ref.set({'in_group': True}, merge=True)  # Enable group mode
-        
 
         if not user_doc.exists:
             update.message.reply_text("Set your interests first with /interests!")
@@ -161,15 +188,17 @@ def match(update: Update, context: CallbackContext) -> None:
 
         # Extract matching user IDs (document IDs)
         match_list = [f"User {str(match.id)}" for match in matches]
-        
+
         if not match_list:
             update.message.reply_text("🔍 No users with similar interests found.")
         else:
-            update.message.reply_text(f"🤝 Matching users:\n{', '.join(match_list)}\n\nYou are now in the group. Use /exit to leave.")
+            update.message.reply_text(
+                f"🤝 Matching users:\n{', '.join(match_list)}\n\nYou are now in the group. Use /exit to leave.")
 
     except Exception as e:
         logging.error(f"Match failed: {str(e)}", exc_info=True)
         update.message.reply_text("❌ An error occurred. Please try again.")
+
 
 def interests(update: Update, context: CallbackContext) -> None:
     global db
@@ -178,26 +207,40 @@ def interests(update: Update, context: CallbackContext) -> None:
         allowed_interests = {
             "gaming",
             "vr",
-            "social"
+            "social",
+            "music",
+            "sports",
+            "technology",
+            "art",
+            "movies"
         }
+
+        if not context.args:
+            update.message.reply_text(
+                f"Please provide your interests.\nAllowed interests: {', '.join(allowed_interests)}")
+            return
+
         user_input = [arg.lower() for arg in context.args]
-        user_ref.set({'interests': user_input, 'in_group': False}, merge=True)
 
         # Validate input
         invalid = [interest for interest in user_input if interest not in allowed_interests]
         if invalid:
-            update.message.reply_text(f"Invalid interests: {', '.join(invalid)}.\nAllowed: {', '.join(allowed_interests)}")
+            update.message.reply_text(
+                f"Invalid interests: {', '.join(invalid)}.\nAllowed: {', '.join(allowed_interests)}")
             return
 
         # Save to Firestore (document ID = user ID)
         user_id = str(update.effective_user.id)
         user_ref = db.collection('users').document(user_id)
-        user_ref.set({'interests': user_input}, merge=True)  # No 'user_id' field needed
-        update.message.reply_text(f"Interests set to: {', '.join(user_input)}")
+        user_ref.set({
+            'interests': user_input,
+            'in_group': False  # Reset group status when interests change
+        }, merge=True)
+        update.message.reply_text(f"🎯 Interests set to: {', '.join(user_input)}")
 
-        
     except Exception as e:
         update.message.reply_text(f"Error: {str(e)}")
+
 
 def add(update: Update, context: CallbackContext) -> None:
     global db
@@ -208,16 +251,16 @@ def add(update: Update, context: CallbackContext) -> None:
 
         msg = context.args[0].lower()  # Case-insensitive
         doc_ref = db.collection('counts').document(msg)
-        
+
         # Update count
         if doc_ref.get().exists:
             doc_ref.update({'count': firestore.Increment(1)})
         else:
             doc_ref.set({'count': 1})
-        
+
         # Fetch updated count
         count = doc_ref.get().to_dict().get('count', 1)
-        update.message.reply_text(f'Keyword "{msg}" has been counted {count} times.')
+        update.message.reply_text(f'✅ Keyword "{msg}" has been counted {count} times.')
     except Exception as e:
         update.message.reply_text(f"Error: {str(e)}")
 
