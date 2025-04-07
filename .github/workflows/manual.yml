@@ -17,7 +17,7 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        working-directory: ./public  # Important: Target your Python directory
+        working-directory: ./public
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
@@ -26,8 +26,8 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        working-directory: ./public  # Deploy from your Python directory
-        run: railway run --service comp7940 --detach "python chatbox.py"
+        working-directory: ./public
+        run: railway up --detach --service comp7940
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
