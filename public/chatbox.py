@@ -78,7 +78,7 @@ def main():
         global db  # Declare db as global
         # Initialize Firebase
         cred = credentials.Certificate("service-account-key.json")
-        firebase_admin.initialize_app(cred, {'projectId': 'comp7940-aa'})
+        firebase_admin.initialize_app(cred, {'projectId': 'comp7940-aa-2'})
         db = firestore.client()
 
         # Test the database
