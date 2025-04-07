@@ -3,7 +3,7 @@ name: Deploy to Railway
 on:
   push:
     branches:
-      - master  # or 'main' if that's your default branch
+      - main  # or 'main' if that's your default branch
 
 jobs:
   deploy:
