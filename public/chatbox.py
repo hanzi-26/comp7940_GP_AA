@@ -69,8 +69,9 @@ def main():
     # Load your token and create an Updater for your Bot
 #    config = configparser.ConfigParser()
 #    config.read('config.ini')
-    updater = Updater(os.environ['RAILWAY_TOKEN'], use_context=True)
-    dispatcher = updater.dispatcher
+    telegram_token = os.getenv('TELEGRAM_ACCESS_TOKEN')
+    firebase_key = os.getenv('FIREBASED_KEY')
+    chatgpt_url = os.getenv('CHATGPT_BASICURL')
     global chatgpt
     chatgpt = HKBU_ChatGPT(config)
     try:
