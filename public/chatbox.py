@@ -2,14 +2,14 @@ from google.cloud.firestore import FieldFilter
 from telegram import Update
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           CallbackContext)
-import configparser
+#import configparser
 import logging
 from ChatGPT_HKBU import HKBU_ChatGPT
 import firebase_admin
 from firebase_admin import credentials, firestore
 import logging
 from firebase_admin import firestore
-
+import os
 
 class FirestoreHandler(logging.Handler):
     def __init__(self, collection):
@@ -67,10 +67,9 @@ def equiped_chatgpt1(update, context):
 
 def main():
     # Load your token and create an Updater for your Bot
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    updater = Updater(token=(config['TELEGRAM']['ACCESS_TOKEN']), use_context=True,
-                      request_kwargs={'read_timeout': 20, 'connect_timeout': 20})
+#    config = configparser.ConfigParser()
+#    config.read('config.ini')
+    updater = Updater(os.environ['RAIL_ACCESS_TOKEN'], use_context=True)
     dispatcher = updater.dispatcher
     global chatgpt
     chatgpt = HKBU_ChatGPT(config)
