@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Run the app
-CMD ["python", "chatbox1.py"]
+CMD ["python", "chatbox.py"]
