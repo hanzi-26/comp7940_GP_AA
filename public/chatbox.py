@@ -53,16 +53,17 @@ def equiped_chatgpt1(update, context):
         reply_message = update.message.text
         for match in matches:
             # Use run_async to send messages without blocking
-            context.application.run_async(
+            context.dispatcher.run_async(
                 context.bot.send_message,
                 chat_id=int(match.id),
                 text=reply_message
             )
     else:
         # Run ChatGPT submission asynchronously
+        print("chatgpt:")
         reply_message = chatgpt.submit(update.message.text)
+        print("reply", reply_message)
         context.bot.send_message(chat_id=update.effective_chat.id, text=reply_message)
-
 
 def main():
     # Load your token and create an Updater for your Bot
@@ -98,8 +99,9 @@ def main():
     dispatcher.add_handler(CommandHandler("hello", hello, run_async=True))
     dispatcher.add_handler(CommandHandler("match", match, run_async=True))
     dispatcher.add_handler(CommandHandler("add", add))
-    dispatcher.add_handler(chatgpt_handler)
+    #dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), equiped_chatgpt1, run_async=True))
     dispatcher.add_handler(CommandHandler("help", help_command))
+    dispatcher.add_handler(chatgpt_handler)
     dispatcher.add_handler(CommandHandler("recommend", equiped_chatgpt))
     dispatcher.add_handler(CommandHandler("interests", interests))
     dispatcher.add_handler(CommandHandler("exit", exit_group))
