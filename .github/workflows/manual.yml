@@ -2,7 +2,7 @@ name: Deploy to Railway
 
 on:
   push:
-    branches: main
+    branches: [master]
 
 jobs:
   deploy:
@@ -13,19 +13,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"  # Match your required Python version
+          python-version: "3.9"
           cache: 'pip'
 
       - name: Install dependencies
+        working-directory: ./public  # Important: Target your Python directory
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        run: railway run --service comp7940 --detach "python chatbox.py"  # Replace app.py with your entry file
+        working-directory: ./public  # Deploy from your Python directory
+        run: railway run --service comp7940 --detach "python chatbox.py"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
