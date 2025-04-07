@@ -69,7 +69,7 @@ def main():
     # Load your token and create an Updater for your Bot
 #    config = configparser.ConfigParser()
 #    config.read('config.ini')
-    updater = Updater(os.environ['RAIL_ACCESS_TOKEN'], use_context=True)
+    updater = Updater(os.environ['RAILWAY_TOKEN'], use_context=True)
     dispatcher = updater.dispatcher
     global chatgpt
     chatgpt = HKBU_ChatGPT(config)
