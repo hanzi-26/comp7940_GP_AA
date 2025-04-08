@@ -34,5 +34,4 @@ jobs:
 
       - name: Deploy to Railway
         run: |
-          railway login --token ${{ secrets.RAILWAY_TOKEN }}
           railway up --detach --service comp7940 -- --image ${{ secrets.DOCKERHUB_USERNAME }}/aa-image:latest
