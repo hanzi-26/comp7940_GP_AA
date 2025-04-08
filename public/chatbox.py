@@ -102,7 +102,20 @@ def equiped_chatgpt1(update, context):
 def main():
     # Load your token and create an Updater for your Bot
 #    config = configparser.ConfigParser()
-#    config.read('config.ini')
+#    config.read('config.ini')  
+    required_vars = [
+        'TELEGRAM_ACCESS_TOKEN',
+        'CHATGPT_BASICURL',
+        'CHATGPT_MODELNAME',
+        'CHATGPT_APIVERSION',
+        'CHATGPT_ACCESS_TOKEN'
+    ]
+    
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    if missing_vars:
+        raise SystemExit(f"Missing environment variables: {', '.join(missing_vars)}")
+
+  
     updater = Updater(os.environ['TELEGRAM_ACCESS_TOKEN'], use_context=True)
     dispatcher = updater.dispatcher
     global chatgpt
