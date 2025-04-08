@@ -11,6 +11,40 @@ import logging
 from firebase_admin import firestore
 import os
 
+class HKBU_ChatGPT:
+    def __init__(self):
+        self.basic_url = os.getenv('CHATGPT_BASICURL')
+        self.model_name = os.getenv('CHATGPT_MODELNAME')
+        self.api_version = os.getenv('CHATGPT_APIVERSION')
+        self.access_token = os.getenv('CHATGPT_ACCESS_TOKEN')
+        
+        if not all([self.basic_url, self.model_name, self.api_version, self.access_token]):
+            missing = []
+            if not self.basic_url: missing.append('CHATGPT_BASICURL')
+            if not self.model_name: missing.append('CHATGPT_MODELNAME')
+            if not self.api_version: missing.append('CHATGPT_APIVERSION')
+            if not self.access_token: missing.append('CHATGPT_ACCESS_TOKEN')
+            raise ValueError(f"Missing environment variables: {', '.join(missing)}")
+
+    def submit(self, message):
+        conversation = [{"role": "user", "content": message}]
+        url = f"{self.basic_url}/deployments/{self.model_name}/chat/completions/?api-version={self.api_version}"
+        headers = {
+            'Content-Type': 'application/json',
+            'api-key': self.access_token
+        }
+        payload = {'messages': conversation}
+        
+        try:
+            response = requests.post(url, json=payload, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            return data['choices'][0]['message']['content']
+        except requests.exceptions.RequestException as e:
+            return f'Error: {str(e)}'
+        except KeyError:
+            return 'Error: Invalid API response structure'
+
 class FirestoreHandler(logging.Handler):
     def __init__(self, collection):
         super().__init__()
@@ -69,11 +103,10 @@ def main():
     # Load your token and create an Updater for your Bot
 #    config = configparser.ConfigParser()
 #    config.read('config.ini')
-    telegram_token = os.getenv('TELEGRAM_ACCESS_TOKEN')
-    firebase_key = os.getenv('FIREBASED_KEY')
-    chatgpt_url = os.getenv('CHATGPT_BASICURL')
+    updater = Updater(os.environ['TELEGRAM_ACCESS_TOKEN'], use_context=True)
+    dispatcher = updater.dispatcher
     global chatgpt
-    chatgpt = HKBU_ChatGPT(config)
+    chatgpt = HKBU_ChatGPT()
     try:
         global db  # Declare db as global
         # Initialize Firebase
