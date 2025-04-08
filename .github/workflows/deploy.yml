@@ -34,4 +34,5 @@ jobs:
 
       - name: Deploy to Railway
         run: |
-          railway up --detach --service comp7940 --image barry26/aa-image:latest
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
