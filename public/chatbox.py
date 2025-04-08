@@ -143,7 +143,7 @@ def main():
   
       # Initialize Firebase
       cred = credentials.Certificate("service-account-key.json")
-      firebase_admin.initialize_app(cred, {'projectId': service_account_data.get('project_id')})  # Use project_id from JSON
+      firebase_admin.initialize_app(cred, {'projectId': comp7940-aa-2 })  # Use project_id from JSON
       db = firestore.client()
       print("Firestore connected!")
     except Exception as e:
