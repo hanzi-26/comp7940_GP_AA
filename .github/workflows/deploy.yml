@@ -25,14 +25,32 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/aa-image:latest
 
-  deploy-railway:
-    needs: build-and-push
+  deploy:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+          cache: 'pip'
+
+      - name: Install dependencies
+        working-directory: ./public
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        run: |
+        working-directory: ./public
+        run: railway up --detach --service comp7940
+        env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+
+
+  
