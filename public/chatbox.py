@@ -4,7 +4,7 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           CallbackContext)
 #import configparser
 import logging
-from ChatGPT_HKBU import HKBU_ChatGPT
+# from ChatGPT_HKBU import HKBU_ChatGPT
 import firebase_admin
 from firebase_admin import credentials, firestore
 import logging
@@ -130,10 +130,10 @@ def main():
         if not service_account_json:
           raise ValueError("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON")
 
-    # Write JSON to file
+       # Write JSON to file
         with open("service-account-key.json", "w") as f:
           json.dump(json.loads(service_account_json), f)
-        cred = credentials.Certificate("service-account-key.json")
+        cred = credentials.Certificate(service_account_json)
         firebase_admin.initialize_app(cred, {'projectId': 'comp7940-aa-2'})
         db = firestore.client()
 
