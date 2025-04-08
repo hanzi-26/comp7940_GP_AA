@@ -127,23 +127,23 @@ def main():
     try:
       global db
       # Load service account JSON from environment variable
-      service_account_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
-      if not service_account_json:
-          raise ValueError("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON")
+      # service_account_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+      # if not service_account_json:
+      #     raise ValueError("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON")
   
-      # Parse JSON to validate syntax
-      try:
-          service_account_data = json.loads(service_account_json)
-      except json.JSONDecodeError:
-          raise ValueError("Invalid JSON format in GOOGLE_APPLICATION_CREDENTIALS_JSON")
+      # # Parse JSON to validate syntax
+      # try:
+      #     service_account_data = json.loads(service_account_json)
+      # except json.JSONDecodeError:
+      #     raise ValueError("Invalid JSON format in GOOGLE_APPLICATION_CREDENTIALS_JSON")
   
-      # Write JSON to file
-      with open("service-account-key.json", "w") as f:
-          json.dump(service_account_data, f)
+      # # Write JSON to file
+      # with open("service-account-key.json", "w") as f:
+      #     json.dump(service_account_data, f)
   
       # Initialize Firebase
       cred = credentials.Certificate("service-account-key.json")
-      firebase_admin.initialize_app(cred, {'projectId': 'comp7940-aa-2' })  # Use project_id from JSON
+      firebase_admin.initialize_app(cred, {'projectId': 'comp7940-aa-3' })  # Use project_id from JSON
       db = firestore.client()
       print("Firestore connected!")
     except Exception as e:
