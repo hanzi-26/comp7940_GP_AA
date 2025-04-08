@@ -2,15 +2,14 @@ from google.cloud.firestore import FieldFilter
 from telegram import Update
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           CallbackContext)
-#import configparser
+import configparser
 import logging
-# from ChatGPT_HKBU import HKBU_ChatGPT
+#from ChatGPT_HKBU import HKBU_ChatGPT
 import firebase_admin
 from firebase_admin import credentials, firestore
 import logging
 from firebase_admin import firestore
 import os
-import json
 import requests
 
 class HKBU_ChatGPT:
@@ -46,7 +45,7 @@ class HKBU_ChatGPT:
             return f'Error: {str(e)}'
         except KeyError:
             return 'Error: Invalid API response structure'
-
+            
 class FirestoreHandler(logging.Handler):
     def __init__(self, collection):
         super().__init__()
@@ -104,7 +103,10 @@ def equiped_chatgpt1(update, context):
 def main():
     # Load your token and create an Updater for your Bot
 #    config = configparser.ConfigParser()
-#    config.read('config.ini')  
+#    config.read('config.ini')
+#    updater = Updater(token=(config['TELEGRAM']['ACCESS_TOKEN']), use_context=True,
+#                      request_kwargs={'read_timeout': 20, 'connect_timeout': 20})
+#    dispatcher = updater.dispatcher
     required_vars = [
         'TELEGRAM_ACCESS_TOKEN',
         'CHATGPT_BASICURL',
@@ -121,34 +123,23 @@ def main():
   
     updater = Updater(os.environ['TELEGRAM_ACCESS_TOKEN'], use_context=True)
     dispatcher = updater.dispatcher
+    
     global chatgpt
     chatgpt = HKBU_ChatGPT()
-    # In main()
     try:
-      global db
-      # Load service account JSON from environment variable
-      # service_account_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
-      # if not service_account_json:
-      #     raise ValueError("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON")
-  
-      # # Parse JSON to validate syntax
-      # try:
-      #     service_account_data = json.loads(service_account_json)
-      # except json.JSONDecodeError:
-      #     raise ValueError("Invalid JSON format in GOOGLE_APPLICATION_CREDENTIALS_JSON")
-  
-      # # Write JSON to file
-      # with open("service-account-key.json", "w") as f:
-      #     json.dump(service_account_data, f)
-  
-      # Initialize Firebase
-      cred = credentials.Certificate("service-account-key.json")
-      firebase_admin.initialize_app(cred, {'projectId': 'comp7940-aa-3' })  # Use project_id from JSON
-      db = firestore.client()
-      print("Firestore connected!")
+        global db  # Declare db as global
+        # Initialize Firebase
+        # 初始化
+        cred = firebase_admin.credentials.Certificate("service-account-key.json")
+        firebase_admin.initialize_app(cred)
+        # 测试连接
+        db = firestore.client()
+        doc_ref = db.collection("test").document("test")
+        doc_ref.set({"status": "success"})
+        print("Firestore 连接成功！")
     except Exception as e:
-      print(f"Firestore failed: {e}")
-      exit(1)
+        print(f"Firestore connection failed: {e}")
+        exit(1)
     chatgpt_handler = MessageHandler(Filters.text & (~Filters.command), equiped_chatgpt1)
 
     # Configure logging
