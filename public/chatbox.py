@@ -123,27 +123,32 @@ def main():
     dispatcher = updater.dispatcher
     global chatgpt
     chatgpt = HKBU_ChatGPT()
+    # In main()
     try:
-        global db  # Declare db as global
-        # Initialize Firebase
-       #  service_account_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
-       #  if not service_account_json:
-       #    raise ValueError("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON")
-
-       # # Write JSON to file
-       #  with open("service-account-key.json", "w") as f:
-       #    json.dump(json.loads(service_account_json), f)
-        cred = credentials.Certificate("service-account-key.json")
-        firebase_admin.initialize_app(cred, {'projectId': 'comp7940-aa-2'})
-        db = firestore.client()
-
-        # Test the database
-        doc_ref = db.collection('test').document('test_doc')
-        doc_ref.set({'message': 'Hello Firestore!'})
-        print("Firestore connection successful!")
+      global db
+      # Load service account JSON from environment variable
+      service_account_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+      if not service_account_json:
+          raise ValueError("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON")
+  
+      # Parse JSON to validate syntax
+      try:
+          service_account_data = json.loads(service_account_json)
+      except json.JSONDecodeError:
+          raise ValueError("Invalid JSON format in GOOGLE_APPLICATION_CREDENTIALS_JSON")
+  
+      # Write JSON to file
+      with open("service-account-key.json", "w") as f:
+          json.dump(service_account_data, f)
+  
+      # Initialize Firebase
+      cred = credentials.Certificate("service-account-key.json")
+      firebase_admin.initialize_app(cred, {'projectId': service_account_data.get('project_id')})  # Use project_id from JSON
+      db = firestore.client()
+      print("Firestore connected!")
     except Exception as e:
-        print(f"Firestore connection failed: {e}")
-        exit(1)
+      print(f"Firestore failed: {e}")
+      exit(1)
     chatgpt_handler = MessageHandler(Filters.text & (~Filters.command), equiped_chatgpt1)
 
     # Configure logging
