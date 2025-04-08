@@ -126,14 +126,14 @@ def main():
     try:
         global db  # Declare db as global
         # Initialize Firebase
-        service_account_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
-        if not service_account_json:
-          raise ValueError("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON")
+       #  service_account_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+       #  if not service_account_json:
+       #    raise ValueError("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON")
 
-       # Write JSON to file
-        with open("service-account-key.json", "w") as f:
-          json.dump(json.loads(service_account_json), f)
-        cred = credentials.Certificate(service_account_json)
+       # # Write JSON to file
+       #  with open("service-account-key.json", "w") as f:
+       #    json.dump(json.loads(service_account_json), f)
+        cred = credentials.Certificate("service-account-key.json")
         firebase_admin.initialize_app(cred, {'projectId': 'comp7940-aa-2'})
         db = firestore.client()
 
