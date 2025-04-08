@@ -10,6 +10,7 @@ from firebase_admin import credentials, firestore
 import logging
 from firebase_admin import firestore
 import os
+import requests
 
 class HKBU_ChatGPT:
     def __init__(self):
